@@ -1,0 +1,251 @@
+<!DOCTYPE html> 
+<html lang="zh-Hant" class="dark"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>香港氣象追擊網 | GFS廣東沿岸垂直剖面預報</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script> 
+      
+    <script> 
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b0f19',
+                        cardBg: '#0f172a',
+                    },
+                },
+            }
+        }
+    </script>
+      
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .model-card { @apply bg-slate-900 rounded-xl shadow-lg border border-slate-800 overflow-hidden; }
+            .model-img { @apply w-[90%] md:w-[80%] h-auto object-contain mx-auto rounded-lg border border-slate-800 bg-slate-950; }
+            .select-box { @apply bg-slate-800/90 border border-slate-700/80 px-5 py-3 rounded-lg cursor-pointer flex justify-between items-center text-lg font-medium text-slate-100 hover:border-slate-600 transition-colors; }
+            .select-dropdown { @apply absolute left-0 right-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden text-slate-200; }
+            .select-option { @apply px-5 py-3 hover:bg-sky-600/30 cursor-pointer transition-colors text-slate-200 hover:text-white; }
+            .nav-link { @apply px-4 py-3 text-slate-200 hover:text-white hover:bg-sky-600/30 text-sm font-medium transition-all duration-200 rounded-md whitespace-nowrap; }
+            .ctrl-btn { @apply px-4 py-2 bg-slate-800 border border-slate-700 hover:bg-sky-600/30 hover:border-sky-500/50 text-sky-400 font-bold rounded-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center min-w-[44px]; }
+        }
+
+        body { 
+            background-color: #0b0f19; 
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; 
+        } 
+    </style>
+</head> 
+
+<body class="min-h-screen flex flex-col antialiased">
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 py-3 sticky top-0 z-50 backdrop-blur-md bg-opacity-90">
+        <div class="container mx-auto px-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    香港氣象追擊網
+                    <span class="text-xs px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 font-normal">HKMETC</span>
+                </h1>
+                <p class="text-xs text-slate-400 tracking-wider">Hong Kong Meteorological Chaser Network</p>
+            </div>
+            <div class="hidden md:flex items-center gap-4 text-xs text-slate-400">
+                <span>系統運作正常</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="bg-slate-900/80 border-b border-slate-800/80 sticky top-[65px] z-40 backdrop-blur-md">
+        <div class="container mx-auto px-4">
+            <ul class="flex items-center gap-1 overflow-x-auto py-1.5 scrollbar-none">
+                <li><a href="https://eknlau5897.github.io/met-chaser/index.html" class="nav-link">首頁</a></li>
+                <li><a href="https://eknlau5897.github.io/met-chaser/TC.html" class="nav-link">熱帶氣旋資訊</a></li>
+                <li><a href="https://eknlau5897.github.io/GHMWS-realtime/index.html" class="nav-link">實況天氣</a></li>
+                <li><a href="https://eknlau5897.github.io/GHMWS-global-model/index.html" class="nav-link">全球模式預報</a></li>
+                <li><a href="https://eknlau5897.github.io/GHMWS-meso-model/index.html" class="nav-link">中尺度模式預報</a></li>
+                <li><a href="https://eknlau5897.github.io/HKMETC-ensemble/index.html" class="nav-link">集合模式預報</a></li>
+                <li><a href="https://eknlau5897.github.io/earth_met/earth_met.html" class="nav-link">地球風場動畫2.0</a></li>
+                <li><a href="index.html" class="nav-link bg-sky-600/20 text-sky-400">臨近降雨與垂直剖面預報</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6 flex-grow">
+        <div class="text-center mb-6">
+            <h2 class="text-2xl md:text-3xl font-bold text-white mb-1" id="mainTitle">臨近降雨預報</h2>
+            <p class="text-sky-400 text-sm font-medium mt-1">自動更新</p>
+        </div>
+
+        <div class="model-card relative p-4">
+            <!-- Model Dropdown -->
+            <div class="max-w-md mx-auto relative mb-6">
+                <div class="relative">
+                    <div id="modelSelectBox" class="select-box">
+                        <span id="modelSelectText">HKO 臨近降雨預報</span>
+                        <span class="text-sky-400 text-xs">▼</span>
+                    </div>
+                    <div id="modelDropdown" class="select-dropdown hidden">
+                        <div class="select-option" data-model="swirls">HKO 臨近降雨預報 (2D)</div>
+                        <div class="select-option" data-model="swirls_3d">HKO 臨近降雨預報 3D</div>
+                        <div class="select-option" data-model="cross_section">GFS 沿岸垂直剖面預報 (0-120小時)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forecast Control Bar for 120h Vertical Cross Section (Backward / Forward / Play) -->
+            <div id="timeControlContainer" class="hidden max-w-lg mx-auto bg-slate-950/80 border border-slate-800 rounded-xl p-4 mb-6 shadow-inner">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">預報時間 (Forecast Hour)</span>
+                    <span id="timeLabel" class="text-sm font-bold text-sky-400 bg-sky-500/10 px-3 py-1 rounded border border-sky-500/20">+000 小時 (+00h)</span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button id="btnPrev" class="ctrl-btn" title="上一個時間 (Backward)">◄</button>
+                    <button id="btnPlay" class="ctrl-btn flex-grow text-sm" title="播放/暫停 (Play/Pause)">▶ 播放動畫</button>
+                    <button id="btnNext" class="ctrl-btn" title="下一個時間 (Forward)">►</button>
+                </div>
+            </div>
+
+            <!-- Display Image -->
+            <img id="modelImage" src="swirls/img_2d.png" class="model-img my-4" alt="氣象預報圖">
+        </div>
+
+        <!-- Instructions Box -->
+        <div class="model-card bg-slate-900/90 border border-slate-800 text-slate-300 p-5 mt-6">
+            <p class="font-bold mb-2 text-base text-sky-400">使用說明</p>
+            <div class="space-y-1 text-sm text-slate-400" id="instructionsText">
+                <p>• 資料僅供參考，請以官方發布為準</p>
+                <p>• 臨近降雨預報每 12 分鐘自動更新</p>
+                <p>• GFS 垂直剖面預報每 12 小時更新一次（覆蓋未來 0 至 120 小時）</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-6 mt-12 text-center text-slate-400 text-xs">
+        <p class="text-sm font-semibold text-slate-200">香港氣象追擊網 Hong Kong Meteorological Chaser Network (HKMETC)</p>
+        <p class="mt-2 text-slate-500">© 2026 香港氣象追擊網 版權所有</p>
+    </footer>
+
+    <!-- Interactive Script -->
+    <script>
+        const pathConfig = {
+            "swirls": "swirls/img_2d.png",
+            "swirls_3d": "swirls_3d/img_2d.png",
+            "cross_section": "cross_section/vertical_cross_section_f"
+        };
+
+        // Forecast hours for Cross-Section: 0, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120
+        const forecastHours = Array.from({length: 11}, (_, i) => i * 12);
+        let currentHourIndex = 0;
+        let currentModel = "swirls";
+        let isPlaying = false;
+        let playInterval = null;
+
+        const img = document.getElementById("modelImage");
+        const modelSelectText = document.getElementById("modelSelectText");
+        const timeControlContainer = document.getElementById("timeControlContainer");
+        const timeLabel = document.getElementById("timeLabel");
+        const btnPrev = document.getElementById("btnPrev");
+        const btnNext = document.getElementById("btnNext");
+        const btnPlay = document.getElementById("btnPlay");
+        const mainTitle = document.getElementById("mainTitle");
+
+        function updateImage() {
+            if (currentModel === "cross_section") {
+                const fhr = String(forecastHours[currentHourIndex]).padStart(3, '0');
+                img.src = pathConfig["cross_section"] + fhr + ".png";
+                timeLabel.innerText = `+${fhr} 小時 (+${forecastHours[currentHourIndex]}h)`;
+            } else {
+                img.src = pathConfig[currentModel];
+            }
+        }
+
+        function setModel(modelKey, labelText) {
+            currentModel = modelKey;
+            modelSelectText.innerText = labelText;
+            stopAnimation();
+
+            if (currentModel === "cross_section") {
+                timeControlContainer.classList.remove("hidden");
+                mainTitle.innerText = "GFS 沿岸垂直剖面預報 (0-120小時)";
+            } else {
+                timeControlContainer.classList.add("hidden");
+                mainTitle.innerText = "臨近降雨預報";
+            }
+            updateImage();
+        }
+
+        // Backward Button (◄)
+        btnPrev.addEventListener("click", () => {
+            if (currentHourIndex > 0) {
+                currentHourIndex--;
+            } else {
+                currentHourIndex = forecastHours.length - 1; // Loop back to max hour
+            }
+            updateImage();
+        });
+
+        // Forward Button (►)
+        btnNext.addEventListener("click", () => {
+            if (currentHourIndex < forecastHours.length - 1) {
+                currentHourIndex++;
+            } else {
+                currentHourIndex = 0; // Loop back to start
+            }
+            updateImage();
+        });
+
+        // Play / Pause Animation Button
+        function stopAnimation() {
+            isPlaying = false;
+            clearInterval(playInterval);
+            btnPlay.innerText = "▶ 播放動畫";
+            btnPlay.classList.remove("bg-rose-600/30", "text-rose-400", "border-rose-500/50");
+        }
+
+        btnPlay.addEventListener("click", () => {
+            if (isPlaying) {
+                stopAnimation();
+            } else {
+                isPlaying = true;
+                btnPlay.innerText = "❚❚ 暫停動畫";
+                btnPlay.classList.add("bg-rose-600/30", "text-rose-400", "border-rose-500/50");
+                playInterval = setInterval(() => {
+                    currentHourIndex = (currentHourIndex + 1) % forecastHours.length;
+                    updateImage();
+                }, 1200); // Transitions every 1.2 seconds
+            }
+        });
+
+        // Dropdown Click Handlers
+        document.getElementById("modelSelectBox").addEventListener("click", (e) => {
+            e.stopPropagation();
+            document.getElementById("modelDropdown").classList.toggle("hidden");
+        });
+
+        document.querySelectorAll("#modelDropdown .select-option").forEach(option => {
+            option.addEventListener("click", () => {
+                const selectedModel = option.dataset.model;
+                const label = option.innerText;
+                document.getElementById("modelDropdown").classList.add("hidden");
+                setModel(selectedModel, label);
+            });
+        });
+
+        document.addEventListener("click", (e) => {
+            const modelBox = document.getElementById("modelSelectBox");
+            if (!modelBox.contains(e.target)) {
+                document.getElementById("modelDropdown").classList.add("hidden");
+            }
+        });
+
+        // Initial setup
+        updateImage();
+    </script>
+</body>
+</html>
