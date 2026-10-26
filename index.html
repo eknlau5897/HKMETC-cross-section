@@ -3,10 +3,10 @@
 <head> 
     <meta charset="UTF-8"> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>香港氣象追擊網 | 垂直剖面分析</title>
+    <title>香港氣象追擊網 | 沿岸垂直剖面預報</title>
     
     <script src="https://cdn.tailwindcss.com"></script> 
-     
+      
     <script> 
         tailwind.config = {
             darkMode: 'class',
@@ -20,15 +20,16 @@
             }
         }
     </script>
-     
+      
     <style type="text/tailwindcss">
         @layer utilities {
             .model-card { @apply bg-slate-900 rounded-xl shadow-lg border border-slate-800 overflow-hidden; }
-            .model-img { @apply w-[85%] md:w-[75%] h-auto object-contain mx-auto rounded-lg border border-slate-800 bg-slate-950; }
+            .model-img { @apply w-[90%] md:w-[80%] h-auto object-contain mx-auto rounded-lg border border-slate-800 bg-slate-950; }
             .select-box { @apply bg-slate-800/90 border border-slate-700/80 px-5 py-3 rounded-lg cursor-pointer flex justify-between items-center text-lg font-medium text-slate-100 hover:border-slate-600 transition-colors; }
             .select-dropdown { @apply absolute left-0 right-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden text-slate-200; }
             .select-option { @apply px-5 py-3 hover:bg-sky-600/30 cursor-pointer transition-colors text-slate-200 hover:text-white; }
             .nav-link { @apply px-4 py-3 text-slate-200 hover:text-white hover:bg-sky-600/30 text-sm font-medium transition-all duration-200 rounded-md whitespace-nowrap; }
+            .ctrl-btn { @apply px-4 py-2 bg-slate-800 border border-slate-700 hover:bg-sky-600/30 hover:border-sky-500/50 text-sky-400 font-bold rounded-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center min-w-[44px]; }
         }
 
         body { 
@@ -67,7 +68,7 @@
                 <li><a href="https://eknlau5897.github.io/GHMWS-meso-model/index.html" class="nav-link">中尺度模式預報</a></li>
                 <li><a href="https://eknlau5897.github.io/HKMETC-ensemble/index.html" class="nav-link">集合模式預報</a></li>
                 <li><a href="https://eknlau5897.github.io/earth_met/earth_met.html" class="nav-link">地球風場動畫2.0</a></li>
-                <li><a href="index.html" class="nav-link bg-sky-600/20 text-sky-400">垂直剖面分析</a></li>
+                <li><a href="index.html" class="nav-link bg-sky-600/20 text-sky-400">沿岸垂直剖面預報</a></li>
             </ul>
         </div>
     </nav>
@@ -75,36 +76,49 @@
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-6 flex-grow">
         <div class="text-center mb-6">
-            <h2 class="text-2xl md:text-3xl font-bold text-white mb-1">垂直剖面分析</h2>
-            <p class="text-sky-400 text-sm font-medium mt-1">Vertical Cross Section Analysis • 自動更新</p>
+            <h2 class="text-2xl md:text-3xl font-bold text-white mb-1">GFS 沿岸垂直剖面預報 (0-120小時)</h2>
+            <p class="text-sky-400 text-sm font-medium mt-1">自動更新</p>
         </div>
 
         <div class="model-card relative p-4">
+            <!-- Model Select Box (Only Vertical Cross Section) -->
             <div class="max-w-md mx-auto relative mb-6">
                 <div class="relative">
                     <div id="modelSelectBox" class="select-box">
-                        <span id="modelSelectText">HKO 雷達垂直剖面分析</span>
+                        <span id="modelSelectText">GFS 沿岸垂直剖面預報 (0-120小時)</span>
                         <span class="text-sky-400 text-xs">▼</span>
                     </div>
                     <div id="modelDropdown" class="select-dropdown hidden">
-                        <div class="select-option" data-model="vcs_radar">HKO 雷達垂直剖面分析</div>
-                        <div class="select-option" data-model="vcs_ecmwf">ECMWF 垂直剖面 (風場/假相當位溫)</div>
-                        <div class="select-option" data-model="vcs_gfs">GFS 垂直剖面 (垂直速度/濕度)</div>
-                        <div class="select-option" data-model="vcs_meso">中尺度模式垂直剖面</div>
+                        <div class="select-option" data-model="cross_section">GFS 沿岸垂直剖面預報 (0-120小時)</div>
                     </div>
                 </div>
             </div>
 
-            <img id="modelImage" src="vcs_radar/img_vcs.png" class="model-img my-4" alt="垂直剖面分析圖像" onerror="this.onerror=null; this.src='https://placehold.co/800x450/0f172a/38bdf8?text=Vertical+Cross+Section+Analysis';">
+            <!-- Forecast Time Control Bar (Backward / Forward / Play) -->
+            <div id="timeControlContainer" class="max-w-lg mx-auto bg-slate-950/80 border border-slate-800 rounded-xl p-4 mb-6 shadow-inner">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">預報時間 (Forecast Hour)</span>
+                    <span id="timeLabel" class="text-sm font-bold text-sky-400 bg-sky-500/10 px-3 py-1 rounded border border-sky-500/20">+000 小時 (+00h)</span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button id="btnPrev" class="ctrl-btn" title="上一個時間 (Backward)">◄</button>
+                    <button id="btnPlay" class="ctrl-btn flex-grow text-sm" title="播放/暫停 (Play/Pause)">▶ 播放動畫</button>
+                    <button id="btnNext" class="ctrl-btn" title="下一個時間 (Forward)">►</button>
+                </div>
+            </div>
+
+            <!-- Display Image -->
+            <img id="modelImage" src="cross_section/vertical_cross_section_f000.png" class="model-img my-4" alt="沿岸垂直剖面預報圖">
         </div>
 
         <!-- Instructions Box -->
         <div class="model-card bg-slate-900/90 border border-slate-800 text-slate-300 p-5 mt-6">
             <p class="font-bold mb-2 text-base text-sky-400">使用說明</p>
             <div class="space-y-1 text-sm text-slate-400">
-                <p>• 本頁面專為垂直剖面分析（Vertical Cross Section Analysis）設計</p>
                 <p>• 資料僅供參考，請以官方發布為準</p>
-                <p>• 每 12 分鐘自動更新</p>
+                <p>• GFS 垂直剖面預報每 12 小時自動更新（覆蓋未來 0 至 120 小時）</p>
+                <p>• 可使用下方按鈕手動切換或自動播放動畫</p>
             </div>
         </div>
     </main>
@@ -115,26 +129,71 @@
         <p class="mt-2 text-slate-500">© 2026 香港氣象追擊網 版權所有</p>
     </footer>
 
+    <!-- Interactive Script -->
     <script>
-        const img_vcs = "img_vcs";
-        const pathConfig = {
-            "vcs_radar": "vcs_radar/",
-            "vcs_ecmwf": "vcs_ecmwf/",
-            "vcs_gfs": "vcs_gfs/",
-            "vcs_meso": "vcs_meso/"
-        };
-
-        let currentFxx = img_vcs;
-        let currentModel = "vcs_radar";
+        const basePath = "cross_section/vertical_cross_section_f";
+        
+        // 預報時數：0, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120
+        const forecastHours = Array.from({length: 11}, (_, i) => i * 12);
+        let currentHourIndex = 0;
+        let isPlaying = false;
+        let playInterval = null;
 
         const img = document.getElementById("modelImage");
-        const modelSelectText = document.getElementById("modelSelectText");
+        const timeLabel = document.getElementById("timeLabel");
+        const btnPrev = document.getElementById("btnPrev");
+        const btnNext = document.getElementById("btnNext");
+        const btnPlay = document.getElementById("btnPlay");
 
         function updateImage() {
-            const basePath = pathConfig[currentModel];
-            img.src = basePath + currentFxx + ".png";
+            const fhr = String(forecastHours[currentHourIndex]).padStart(3, '0');
+            img.src = basePath + fhr + ".png";
+            timeLabel.innerText = `+${fhr} 小時 (+${forecastHours[currentHourIndex]}h)`;
         }
 
+        // 後退按鈕 (◄)
+        btnPrev.addEventListener("click", () => {
+            if (currentHourIndex > 0) {
+                currentHourIndex--;
+            } else {
+                currentHourIndex = forecastHours.length - 1; // 循環至最大時數
+            }
+            updateImage();
+        });
+
+        // 前進按鈕 (►)
+        btnNext.addEventListener("click", () => {
+            if (currentHourIndex < forecastHours.length - 1) {
+                currentHourIndex++;
+            } else {
+                currentHourIndex = 0; // 循環回到 0 小時
+            }
+            updateImage();
+        });
+
+        // 動畫播放 / 暫停
+        function stopAnimation() {
+            isPlaying = false;
+            clearInterval(playInterval);
+            btnPlay.innerText = "▶ 播放動畫";
+            btnPlay.classList.remove("bg-rose-600/30", "text-rose-400", "border-rose-500/50");
+        }
+
+        btnPlay.addEventListener("click", () => {
+            if (isPlaying) {
+                stopAnimation();
+            } else {
+                isPlaying = true;
+                btnPlay.innerText = "❚❚ 暫停動畫";
+                btnPlay.classList.add("bg-rose-600/30", "text-rose-400", "border-rose-500/50");
+                playInterval = setInterval(() => {
+                    currentHourIndex = (currentHourIndex + 1) % forecastHours.length;
+                    updateImage();
+                }, 1200); // 每 1.2 秒切換一張
+            }
+        });
+
+        // 下拉選單點擊處理
         document.getElementById("modelSelectBox").addEventListener("click", (e) => {
             e.stopPropagation();
             document.getElementById("modelDropdown").classList.toggle("hidden");
@@ -142,10 +201,7 @@
 
         document.querySelectorAll("#modelDropdown .select-option").forEach(option => {
             option.addEventListener("click", () => {
-                currentModel = option.dataset.model;
-                modelSelectText.innerText = option.innerText;
                 document.getElementById("modelDropdown").classList.add("hidden");
-                updateImage();
             });
         });
 
@@ -156,6 +212,7 @@
             }
         });
 
+        // 初始化載入第一張圖像 (+000h)
         updateImage();
     </script>
 </body>
